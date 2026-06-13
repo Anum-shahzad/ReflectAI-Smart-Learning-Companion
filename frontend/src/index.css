@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-white font-sans;
+    background-color: #191919;
+  }
+
+  ::-webkit-scrollbar        { width: 6px; }
+  ::-webkit-scrollbar-track  { background: #191919; }
+  ::-webkit-scrollbar-thumb  { background: #2e2e2e; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-grad text-white font-semibold px-6 py-2.5 rounded-lg
+           transition-all duration-200 hover:-translate-y-0.5
+           shadow-[0_0_24px_rgba(209,58,151,0.25)]
+           hover:shadow-[0_4px_32px_rgba(209,58,151,0.4)];
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-muted border border-border px-6 py-2.5 rounded-lg
+           transition-all duration-200 hover:border-muted2 hover:text-white;
+  }
+
+  .form-input {
+    @apply w-full bg-white/[0.04] border border-border rounded-xl px-4 py-3
+           text-white placeholder-muted2 outline-none font-sans text-sm
+           transition-all duration-200
+           focus:border-accent focus:ring-2 focus:ring-accent/10;
+  }
+
+  .glass-card {
+    @apply bg-card border border-border rounded-2xl relative overflow-hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-px;
+    background: linear-gradient(135deg, #d13a97, #8b2fc9);
+    opacity: 0.5;
+  }
+
+  .score-bar {
+    @apply h-1 rounded-full transition-all duration-[1200ms] ease-out;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-5 py-2.5 text-muted text-sm font-medium
+           cursor-pointer transition-all duration-150 relative
+           hover:bg-white/[0.03] hover:text-white;
+  }
+
+  .sidebar-item.active {
+    @apply text-white bg-accent/[0.08];
+  }
+
+  .sidebar-item.active::before {
+    content: '';
+    @apply absolute left-0 top-0 bottom-0 w-0.5 bg-brand-grad;
+  }
+
+  .concept-tag {
+    @apply inline-flex items-center gap-1.5 border rounded-md px-2.5 py-1
+           text-xs font-mono m-0.5;
+  }
+
+  .concept-tag-missing {
+    @apply concept-tag border-warn/30 text-warn bg-warn/5;
+  }
+
+  .concept-tag-misconception {
+    @apply concept-tag border-danger/30 text-danger bg-danger/5;
+  }
+
+  .concept-tag-covered {
+    @apply concept-tag border-teal/30 text-teal bg-teal/5;
+  }
+}
+/* Animations */
+@keyframes fadeup {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeup {
+  animation: fadeup 0.3s ease forwards;
+} 
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fadeup   { animation: fadeUp 0.5s ease both; }
+.animate-pulse-dot { animation: pulse-dot 2s ease infinite; }
+.animate-spin     { animation: spin 0.9s linear infinite; }
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+
+/* ── Additional animations for new components ── */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+.animate-bounce { animation: bounce 1s ease infinite; }
+.animate-ping   { animation: ping 1.2s ease-out infinite; }
+
+/* Mizu glow pulse */
+@keyframes mizuGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255,45,120,0.3); }
+  50%       { box-shadow: 0 0 40px rgba(255,45,120,0.6); }
+}
+
+/* Prose-like spacing for notes/lectures */
+.prose-custom h2 { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 1.4rem 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid #2e2e2e; }
+.prose-custom h3 { font-size: 0.95rem; font-weight: 600; color: #fff; margin: 1rem 0 0.4rem; }
+.prose-custom h1 { font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0 0 1rem; background: linear-gradient(135deg,#d13a97,#8b2fc9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
