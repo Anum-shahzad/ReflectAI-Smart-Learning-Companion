@@ -147,7 +147,7 @@ export default function Dashboard() {
         </main>
       </div>
 
-      <MizuFloat activeTab={tab} />
+      {tab !== 'chatbot' && <MizuFloat activeTab={tab} />}
     </div>
   )
 }
