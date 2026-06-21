@@ -36,7 +36,7 @@ export default function NotesGenerator() {
   const [savedNotes, setSavedNotes] = useState([])
   const [viewNote,  setViewNote]  = useState(null)
   const [tab,       setTab]       = useState('generate') // 'generate' | 'saved'
-  const [mizuMood,  setMizuMood]  = useState('idle')
+   
 
   useEffect(() => { fetchSaved() }, [])
 
@@ -50,15 +50,15 @@ export default function NotesGenerator() {
   const generate = async () => {
     if (!topic.trim()) return setError('Enter a topic first')
     setError(''); setContent(''); setSaved(false)
-    setLoading(true); setMizuMood('concerned')
+    setLoading(true) 
     try {
       const { data } = await api.post('/notes/generate', { topic })
       setContent(data.content)
-      setMizuMood('impressed')
+       
       mizuReact('notes_generated', { topic })
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to generate notes')
-      setMizuMood('chaos')
+      
     } finally {
       setLoading(false)
     }
@@ -70,7 +70,7 @@ export default function NotesGenerator() {
     try {
       await api.post('/notes/save', { topic_name: topic, generated_content: content })
       setSaved(true); fetchSaved()
-      setMizuMood('encouraging')
+       
     } catch {
       setError('Failed to save note')
     } finally {
@@ -109,12 +109,9 @@ export default function NotesGenerator() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold">Notes Generator</h1>
-          <p className="text-muted text-sm mt-1">Enter a topic — Mizu's brain does the rest</p>
-        </div>
-        <MizuCharacter mood={mizuMood} size={80} />
+       <div className="mb-1">
+      <h1 className="font-serif text-2xl font-semibold">Notes Generator</h1>
+        <p className="text-muted text-sm mt-1">Enter a topic — Mizu's brain does the rest</p>
       </div>
 
       {/* Tabs */}
