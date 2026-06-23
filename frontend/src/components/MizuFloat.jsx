@@ -2,68 +2,62 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import MizuCharacter from './MizuCharacter'
 import { useMizuListener, mizuReact } from '../hooks/useMizu'
 
-const MIZU_SIZE = 80
+const MIZU_SIZE  = 64
+const MIZU_H     = MIZU_SIZE * (320 / 280)
 
-// ── Purposeful wander zones ───────────────────────────────────────────────────
-// All zones are on the RIGHT side of the screen (x > 60%) so Mizu never
-// overlaps the sidebar (which is ~240px / ~17% on a 1440px screen).
-// Y values are chosen to look natural: just below nav, mid-screen, above bottom.
-// Each zone has a descriptive name so you know why it's there.
-const ZONES = [
-  { x: 88, y: 78, name: 'bottom-right corner'     },  // home base
-  { x: 88, y: 10, name: 'top-right corner'         },  // just below nav
-  { x: 88, y: 44, name: 'right edge mid'           },  // right side center
-  { x: 68, y: 78, name: 'bottom right of content'  },  // bottom, not too far right
-  { x: 68, y: 10, name: 'top of content area'      },  // top, clear of nav
-  { x: 76, y: 58, name: 'lower right content'      },  // natural reading area bottom
-  { x: 76, y: 26, name: 'upper right content'      },  // natural reading area top
-]
+// Increase this number = Mizu moves further LEFT from the right edge
+const RIGHT_INSET = 72
 
-// Trim Mizu's speech to max ~12 words so it's always readable before dismiss
+const PERCH_MAP = {
+  evaluate:  [{ id: 'evaluate-main'        }],
+  history:   [{ id: 'history-main'         }],
+  notes:     [{ id: 'notes-main'           }],
+  learn:     [{ id: 'learn-main'           }],
+  // Settings: use the Profile card's top border for Y, but still fixed X on right wall
+  settings:  [{ id: 'settings-profile-card' }],
+  analytics: [
+    { id: 'analytics-stats-row'  },
+    { id: 'analytics-scoretrend' },
+    { id: 'analytics-weekly'     },
+  ],
+}
+
 function trimLine(line) {
   if (!line) return line
   const words = line.trim().split(' ')
-  if (words.length <= 14) return line
-  return words.slice(0, 13).join(' ') + '…'
+  if (words.length <= 8) return line
+  return words.slice(0, 7).join(' ') + '.'
 }
 
 export default function MizuFloat({ activeTab = 'default' }) {
   const [visible,  setVisible]  = useState(false)
-  const [pos,      setPos]      = useState({ x: 88, y: 78 })
-  const [speech,   setSpeech]   = useState(null)   // stays until user clicks Mizu
+  const [coords,   setCoords]   = useState(null)
+  const [speech,   setSpeech]   = useState(null)
   const [mood,     setMood]     = useState('idle')
-  const [facing,   setFacing]   = useState(1)
-  const [isMoving, setIsMoving] = useState(false)
 
-  const posRef          = useRef({ x: 88, y: 78 })
   const activeTabRef    = useRef(activeTab)
   const prevTabRef      = useRef(activeTab)
-  const speechTimerRef  = useRef(null)   // only used for auto-dismiss after very long wait
+  const speechTimerRef  = useRef(null)
   const idleTimerRef    = useRef(null)
-  const wanderTimerRef  = useRef(null)
   const typingTimerRef  = useRef(null)
   const lastActivityRef = useRef(Date.now())
   const isTypingRef     = useRef(false)
   const topicRef        = useRef('')
   const charCountRef    = useRef(0)
   const speechKeyRef    = useRef(0)
-  const rafRef          = useRef(null)
-  const movingRef       = useRef(false)
+  const perchIndexRef   = useRef(0)
 
-  // ── Speak: show bubble, stays until Mizu is clicked ──────────────────────
   const speak = useCallback((text, newMood = 'idle') => {
     if (!text) return
     const trimmed = trimLine(text)
-    // Clear any previous auto-dismiss timer
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current)
     speechKeyRef.current += 1
     setSpeech({ text: trimmed, key: speechKeyRef.current })
     if (newMood) setMood(newMood)
-    // Fallback auto-dismiss after 18 seconds in case user never clicks
     speechTimerRef.current = setTimeout(() => {
       setSpeech(null)
       setMood('idle')
-    }, 18000)
+    }, 14000)
   }, [])
 
   const dismissSpeech = useCallback(() => {
@@ -72,72 +66,87 @@ export default function MizuFloat({ activeTab = 'default' }) {
     setMood('idle')
   }, [])
 
-  // ── Listen to mizuReact events from anywhere in the app ──────────────────
   useMizuListener(useCallback(({ line, mood: m }) => {
     speak(line, m || 'idle')
   }, [speak]))
 
-  // ── Move to viewport % position ──────────────────────────────────────────
-  const moveTo = useCallback((xPct, yPct) => {
-    if (movingRef.current) return
-    movingRef.current = true
-    setIsMoving(true)
+  const updatePosition = useCallback(() => {
+    const tab = activeTabRef.current
+    const vw  = window.innerWidth
 
-    const startX = posRef.current.x
-    const startY = posRef.current.y
-    setFacing(xPct > startX ? 1 : -1)
+    // X: always fixed from the right — never clips, never varies per page
+    const x = vw - MIZU_SIZE - RIGHT_INSET
 
-    const dx = xPct - startX
-    const dy = yPct - startY
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    const duration = Math.max(900, dist * 28)
-    const startTime = performance.now()
+    const perches = PERCH_MAP[tab]
+    if (!perches) { setCoords({ x, y: 200 }); return }
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    const perch = perches[perchIndexRef.current] || perches[0]
+    if (!perch)  { setCoords({ x, y: 200 }); return }
 
-    const step = (now) => {
-      const t = Math.min((now - startTime) / duration, 1)
-      const e = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2
-      const cx = startX + dx * e
-      const cy = startY + dy * e
-      posRef.current = { x: cx, y: cy }
-      setPos({ x: cx, y: cy })
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(step)
-      } else {
-        posRef.current = { x: xPct, y: yPct }
-        setPos({ x: xPct, y: yPct })
-        setIsMoving(false)
-        setFacing(1)
-        movingRef.current = false
-      }
+    const el = document.querySelector(`[data-mizu-perch="${perch.id}"]`)
+    if (!el)     { setCoords({ x, y: 200 }); return }
+
+    const rect = el.getBoundingClientRect()
+
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      setCoords(null)
+      return
     }
-    rafRef.current = requestAnimationFrame(step)
+
+    // Y: feet at the top border line
+    // rect.top - MIZU_H * 0.75 means:
+    //   top 75% of Mizu body is ABOVE the line (sitting)
+    //   bottom 25% hangs BELOW the line (legs dangling)
+    const y = rect.top - MIZU_H * 0.75
+
+    setCoords({ x, y })
   }, [])
 
-  // ── Wander to a purposeful zone ───────────────────────────────────────────
-  const wander = useCallback(() => {
-    const cur = posRef.current
-    // Pick a zone meaningfully different from current position
-    const others = ZONES.filter(z =>
-      Math.abs(z.x - cur.x) > 8 || Math.abs(z.y - cur.y) > 8
-    )
-    const zone = others[Math.floor(Math.random() * others.length)]
-    moveTo(zone.x, zone.y)
-  }, [moveTo])
+  useEffect(() => {
+    const onScroll = () => {
+      const perches = PERCH_MAP[activeTabRef.current]
+      if (perches && perches.length > 1) {
+        let bestIdx  = 0
+        let bestDist = Infinity
+        perches.forEach((p, i) => {
+          const el = document.querySelector(`[data-mizu-perch="${p.id}"]`)
+          if (!el) return
+          const rect   = el.getBoundingClientRect()
+          const dist   = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2)
+          if (rect.bottom > 0 && rect.top < window.innerHeight && dist < bestDist) {
+            bestDist = dist
+            bestIdx  = i
+          }
+        })
+        if (bestIdx !== perchIndexRef.current) {
+          perchIndexRef.current = bestIdx
+        }
+      }
+      updatePosition()
+    }
+    const scrollEl = document.querySelector('main') || window
+    scrollEl.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      scrollEl.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [updatePosition])
 
-  // ── Schedule recurring wander ─────────────────────────────────────────────
-  const scheduleWander = useCallback(() => {
-    if (wanderTimerRef.current) clearTimeout(wanderTimerRef.current)
-    // Wander every 25-50 seconds — not too frequent, feels intentional
-    const delay = 25000 + Math.random() * 25000
-    wanderTimerRef.current = setTimeout(() => {
-      wander()
-      scheduleWander()
-    }, delay)
-  }, [wander])
+  useEffect(() => {
+    activeTabRef.current  = activeTab
+    perchIndexRef.current = 0
+    if (!visible) return
+    const t = setTimeout(() => {
+      updatePosition()
+      if (activeTab !== prevTabRef.current) {
+        prevTabRef.current = activeTab
+        mizuReact('tab_switch', { tab: activeTab })
+      }
+    }, 350)
+    return () => clearTimeout(t)
+  }, [activeTab, visible, updatePosition])
 
-  // ── Idle detection ────────────────────────────────────────────────────────
   const scheduleIdleCheck = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
     idleTimerRef.current = setTimeout(async () => {
@@ -145,29 +154,13 @@ export default function MizuFloat({ activeTab = 'default' }) {
       const tab  = activeTabRef.current
       if (idle >= 30000) {
         await mizuReact('idle_long',  { tab, seconds: Math.round(idle / 1000) })
-        wander()
       } else if (idle >= 13000) {
         await mizuReact('idle_short', { tab, seconds: Math.round(idle / 1000) })
         scheduleIdleCheck()
       }
     }, 13000)
-  }, [wander])
+  }, [])
 
-  // ── Tab change ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    activeTabRef.current = activeTab
-    if (!visible) return
-    if (activeTab === prevTabRef.current) return
-    prevTabRef.current = activeTab
-
-    const t = setTimeout(async () => {
-      await mizuReact('tab_switch', { tab: activeTab })
-      if (Math.random() < 0.4) setTimeout(wander, 1400)
-    }, 700)
-    return () => clearTimeout(t)
-  }, [activeTab, visible, wander])
-
-  // ── Activity + typing tracking ────────────────────────────────────────────
   useEffect(() => {
     const onActivity = () => {
       lastActivityRef.current = Date.now()
@@ -178,9 +171,8 @@ export default function MizuFloat({ activeTab = 'default' }) {
       lastActivityRef.current = Date.now()
       const topicEl   = document.getElementById('mizuTopicInput')
       const explainEl = document.getElementById('mizuExplainInput')
-      if (topicEl)   topicRef.current    = topicEl.value
+      if (topicEl)   topicRef.current     = topicEl.value
       if (explainEl) charCountRef.current = explainEl.value.length
-
       if (!isTypingRef.current) {
         isTypingRef.current = true
         if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
@@ -208,7 +200,6 @@ export default function MizuFloat({ activeTab = 'default' }) {
         }
       }, 5000)
     }
-
     window.addEventListener('mousemove', onActivity, { passive: true })
     window.addEventListener('click',     onActivity)
     window.addEventListener('keydown',   onKeydown)
@@ -221,104 +212,77 @@ export default function MizuFloat({ activeTab = 'default' }) {
     }
   }, [scheduleIdleCheck])
 
-  // ── Mount ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     const t = setTimeout(() => {
       setVisible(true)
-      setTimeout(async () => {
-        await mizuReact('tab_switch', { tab: activeTabRef.current })
-        scheduleWander()
+      setTimeout(() => {
+        updatePosition()
+        mizuReact('tab_switch', { tab: activeTabRef.current })
         scheduleIdleCheck()
-      }, 800)
-    }, 1800)
+      }, 500)
+    }, 1200)
     return () => {
       clearTimeout(t)
-      ;[speechTimerRef, idleTimerRef, wanderTimerRef, typingTimerRef].forEach(r => {
+      ;[speechTimerRef, idleTimerRef, typingTimerRef].forEach(r => {
         if (r.current) clearTimeout(r.current)
       })
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [scheduleWander, scheduleIdleCheck])
+  }, [updatePosition, scheduleIdleCheck])
 
-  if (!visible) return null
-
-  const vw   = window.innerWidth
-  const vh   = window.innerHeight
-  const pxX  = Math.min((pos.x / 100) * vw, vw - MIZU_SIZE - 8)
-  const pxY  = Math.min((pos.y / 100) * vh, vh - MIZU_SIZE * (320/280) - 8)
-  const bubbleLeft = pos.x > 60   // bubble goes left when Mizu is in right half
+  if (!visible || !coords) return null
 
   return (
     <div style={{
-      position: 'fixed',
-      left: pxX,
-      top:  pxY,
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: bubbleLeft ? 'flex-end' : 'flex-start',
-      gap: 8,
+      position:      'fixed',
+      left:          coords.x,
+      top:           coords.y,
+      zIndex:        9999,
       pointerEvents: 'none',
+      transition:    'top 0.4s cubic-bezier(0.4,0,0.2,1)',
     }}>
-
-      {/* Speech bubble — stays until Mizu is clicked */}
       {speech && (
         <div
           key={speech.key}
-          className="animate-fadeup"
+          onClick={dismissSpeech}
           style={{
-            maxWidth: 210,
-            borderRadius: 14,
-            padding: '9px 13px',
-            fontSize: 12.5,
-            color: '#f0f0f0',
-            lineHeight: 1.5,
-            background: 'linear-gradient(135deg, #1c0018, #0a000a)',
-            border: '1px solid rgba(255,45,120,0.3)',
-            boxShadow: '0 4px 24px rgba(255,45,120,0.18)',
-            pointerEvents: 'none',
+            position:      'absolute',
+            bottom:        MIZU_H - 8,
+            right:         MIZU_SIZE + 8,
+            width:         158,
+            borderRadius:  10,
+            padding:       '7px 10px',
+            fontSize:      12,
+            fontWeight:    500,
+            color:         '#f5f5f5',
+            lineHeight:    1.4,
+            background:    'linear-gradient(135deg, #1c0018, #0a000a)',
+            border:        '1px solid rgba(255,45,120,0.35)',
+            boxShadow:     '0 4px 20px rgba(255,45,120,0.2)',
+            pointerEvents: 'auto',
+            cursor:        'pointer',
+            userSelect:    'none',
+            whiteSpace:    'normal',
           }}
         >
-          <div style={{
-            fontSize: 9,
-            fontFamily: 'DM Mono, monospace',
-            color: '#ff6eb0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            marginBottom: 4,
-          }}>
-            Mizu
-          </div>
           {speech.text}
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', marginTop: 5 }}>
-            click mizu to dismiss
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 4 }}>
+            click to dismiss
           </div>
         </div>
       )}
-
-      {/* Mizu — click to dismiss speech */}
       <div
-        style={{
-          pointerEvents: 'auto',
-          cursor: speech ? 'pointer' : 'default',
-          transform: `scaleX(${facing})`,
-          transformOrigin: 'center center',
-          filter: isMoving ? 'brightness(1.2)' : 'none',
-          transition: 'filter 0.3s',
-          position: 'relative',
-        }}
+        style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'relative' }}
         onClick={dismissSpeech}
-        title={speech ? 'Click to dismiss' : ''}
       >
         <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 52,
-          height: 12,
-          background: 'radial-gradient(ellipse, rgba(255,45,120,0.4), transparent 70%)',
-          filter: 'blur(5px)',
+          position:      'absolute',
+          top:           MIZU_H * 0.75,
+          left:          '50%',
+          transform:     'translateX(-50%)',
+          width:         52,
+          height:        5,
+          background:    'radial-gradient(ellipse, rgba(209,58,151,0.6), transparent 70%)',
+          filter:        'blur(4px)',
           pointerEvents: 'none',
         }} />
         <MizuCharacter mood={mood} size={MIZU_SIZE} />
