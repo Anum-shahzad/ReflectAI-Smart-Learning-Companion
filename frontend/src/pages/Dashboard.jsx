@@ -152,13 +152,13 @@ export default function Dashboard() {
   )
 }
 
-function Settings({ user }) {
+ function Settings({ user }) {
   return (
     <div>
       <h1 className="font-serif text-2xl font-semibold mb-1">Settings</h1>
       <p className="text-muted text-sm mb-8">Manage your account preferences</p>
       <div className="max-w-md space-y-6">
-        <div className="glass-card p-6">
+          <div className="glass-card p-6" data-mizu-perch="settings-profile-card">
           <h2 className="font-semibold text-white mb-4">Profile</h2>
           <div className="space-y-4">
             <div>

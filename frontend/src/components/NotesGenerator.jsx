@@ -127,7 +127,7 @@ export default function NotesGenerator() {
       {tab === 'generate' && (
         <div className="space-y-6">
           {/* Input */}
-          <div className="glass-card p-6">
+            <div className="glass-card p-6" data-mizu-perch="notes-main">
             <label className="block text-xs font-mono text-muted uppercase tracking-widest mb-3">Topic Name</label>
             <div className="flex gap-3">
               <input

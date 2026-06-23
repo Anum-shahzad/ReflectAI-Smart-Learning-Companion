@@ -154,7 +154,7 @@ export default function Evaluate() {
       <p className="text-muted text-sm mb-8">Explain what you know — our AI will score your conceptual depth</p>
 
       {/* Input card */}
-      <div className="glass-card p-7 mb-6">
+      <div className="glass-card p-7 mb-6" data-mizu-perch="evaluate-main">
 
         {/* Step indicator */}
         <div className="flex gap-0 mb-7">

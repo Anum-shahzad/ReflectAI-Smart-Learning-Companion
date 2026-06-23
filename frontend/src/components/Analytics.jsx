@@ -81,7 +81,7 @@ export default function Analytics() {
       <p className="text-muted text-sm mb-8">Your complete learning dashboard</p>
 
       {/* Top stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8" data-mizu-perch="analytics-stats-row">
         <StatCard label="Evaluations" value={evaluations.total_evaluations} sub="Total attempts" color="#d13a97"/>
         <StatCard label="Lectures Done" value={progress.lectures_completed || 0} sub={`of ${progress.lectures_viewed || 0} viewed`} color="#00c896"/>
         <StatCard label="Quizzes Taken" value={quizzes.quizzes_taken || 0} sub={`Avg score: ${quizzes.avg_quiz_score || 0}%`} color="#f59e0b"/>
@@ -90,8 +90,8 @@ export default function Analytics() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Score averages */}
-        <div className="glass-card p-6">
-          <h2 className="font-semibold text-white mb-5">Average Scores</h2>
+         <div className="glass-card p-6" data-mizu-perch="analytics-scoretrend">
+         <h2 className="font-semibold text-white mb-5">Average Scores</h2>
           {evaluations.total_evaluations > 0 ? (
             <>
               <MiniBar label="Accuracy" value={evaluations.avg_accuracy} color="#d13a97"/>
@@ -161,8 +161,8 @@ export default function Analytics() {
 
         {/* Activity + quiz summary */}
         <div className="space-y-4">
-          <div className="glass-card p-6">
-            <h2 className="font-semibold text-white mb-4">Weekly Activity</h2>
+           <div className="glass-card p-6" data-mizu-perch="analytics-weekly">
+           <h2 className="font-semibold text-white mb-4">Weekly Activity</h2>
             {activity?.length > 0 ? (
               <div className="flex items-end gap-2 h-16">
                 {activity.slice(-7).map((a, i) => {

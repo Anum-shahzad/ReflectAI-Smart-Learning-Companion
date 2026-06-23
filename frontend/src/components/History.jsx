@@ -30,7 +30,7 @@ export default function History() {
       )}
 
       {!loading && !error && history.length === 0 && (
-        <div className="glass-card p-16 text-center">
+          <div className="glass-card p-16 text-center" data-mizu-perch="history-main">
           <div className="text-4xl mb-4">📭</div>
           <div className="text-muted font-medium">No evaluations yet</div>
           <div className="text-muted2 text-sm mt-1">Go to Evaluate to submit your first concept</div>
