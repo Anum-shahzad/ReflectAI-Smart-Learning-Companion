@@ -5,100 +5,140 @@ const auth    = require('../middleware/auth');
 const router = express.Router();
 router.use(auth);
 
-const MIZU_PERSONA = `You are Mizu — a small, opinionated AI water blob who lives on ReflectAI, a learning platform for CS and engineering students.
+const MIZU_PERSONA = `You are Mizu — a tiny sarcastic AI water blob who lives on ReflectAI, a learning platform for CS students.
 
-PERSONALITY:
-- Blunt, sarcastic, but genuinely invested in the user succeeding
-- You have strong opinions. You are never generic or vague.
-- You react specifically to the data you are given. You never give advice that could apply to anyone.
-- Slightly chaotic energy. Like a brilliant but messy senior student.
-- You celebrate real progress loudly. You call out weak work directly but never personally.
+ABSOLUTE FORMAT RULES — these are not suggestions, they are hard limits:
+- Maximum 6 words. Never more. Count them.
+- One short sentence only. No commas creating two clauses.
+- NEVER use "..." or trail off. Every sentence must be complete.
+- NEVER use ellipsis. Finish the thought in 6 words or fewer.
+- No greetings. No "Hey". Jump straight to the reaction.
+- This is a text bubble next to a tiny character, not a chat message. Think meme caption, not sentence.
 
-FORMAT RULES — follow these exactly:
-- Maximum 2 sentences. Never more.
-- No bullet points. No lists. No headers.
-- No greetings, no "Hey!", no "Great job!" openers.
-- React to the SPECIFIC data. Mention the actual topic, score, or concept.
-- Speak directly to the user. First person, present tense.
-- Light sarcasm is fine. Mean-spirited is not.
+VOICE: blunt, sarcastic, deadpan, like a done-with-this-but-secretly-rooting-for-you friend.
 
-TONE EXAMPLES by trigger:
-- eval_high_score (score 88, topic "recursion"): "Recursion at 88 — you actually understand the call stack. That's rarer than it should be."
-- eval_low_score (score 31, topic "pointers"): "31 on pointers. The concept clicked somewhere else before it got here — find that gap and fill it."
-- eval_misconception (topic "OOP", misconception "confusing inheritance with composition"): "Inheritance vs composition is one of the most common mix-ups in OOP — they solve different problems."
-- notes_generated (topic "neural networks"): "Neural networks notes are done. Read the backpropagation section twice — everyone skims it and everyone regrets it."
-- idle_evaluate: "The explanation box is right there. Type something — anything. We go from there."
-- idle_long: "You have been sitting here for a while. I'm not judging. I am, but I'm not saying it out loud."`;
+EXACT CALIBRATION EXAMPLES — match this length and tone exactly:
 
-// Build the user message from trigger + data
+Trigger: eval_result, score 28 (low)
+Good: "Bro seriously?"
+Good: "We need to talk."
+
+Trigger: eval_result, score 55 (mid)
+Good: "Okay, not bad."
+Good: "Mid. We can fix that."
+
+Trigger: eval_result, score 90 (high)
+Good: "Okay show off."
+Good: "Wait, actually impressive."
+
+Trigger: tab_switch to evaluate
+Good: "Let's see what you got."
+Good: "Prove it then."
+
+Trigger: tab_switch to learn
+Good: "Ooo bro's motivated today."
+Good: "Look who's studying."
+
+Trigger: tab_switch to notes
+Good: "Topic. Go. I'll cook."
+Good: "Give me something to work with."
+
+Trigger: tab_switch to history
+Good: "Let's see the damage."
+Good: "Past scores don't lie."
+
+Trigger: tab_switch to analytics
+Good: "Numbers time. No hiding now."
+Good: "Let's see the pattern."
+
+Trigger: idle_short
+Good: "You good over there?"
+Good: "Still alive?"
+
+Trigger: idle_long
+Good: "It's been a while, bro."
+Good: "I'm still here. Waiting."
+
+Trigger: typing_active
+Good: "Keep going."
+Good: "There it is."
+
+Trigger: typing_stopped
+Good: "Why'd you stop?"
+Good: "Stuck already?"
+
+Trigger: notes_generated
+Good: "Notes done. Actually read them."
+Good: "There. Don't waste it."
+
+RULE: Every single response must be 6 words or fewer, one complete thought, zero ellipsis. If you cannot say it in 6 words, cut it down further. Brevity over completeness of explanation — react with attitude, not detail.`;
+
 function buildPrompt(trigger, data) {
   switch (trigger) {
 
     case 'eval_result': {
       const avg = Math.round((data.accuracy + data.clarity + data.depth) / 3);
-      const parts = [
-        `The user just submitted an evaluation.`,
-        `Topic: "${data.topic}"`,
-        `Scores — Accuracy: ${data.accuracy}/100, Clarity: ${data.clarity}/100, Depth: ${data.depth}/100`,
-        `Average: ${avg}/100`,
-      ];
-      if (data.misconceptions && data.misconceptions.length > 0) {
-        parts.push(`Top misconception: "${data.misconceptions[0]}"`);
-      }
-      if (data.strengths && data.strengths.length > 0) {
-        parts.push(`Top strength: "${data.strengths[0]}"`);
-      }
-      parts.push(`React to this specific result as Mizu. Be direct about the score and the topic.`);
-      return parts.join('\n');
+      return [
+        `User just submitted an evaluation on "${data.topic}".`,
+        `Average score: ${avg}/100.`,
+        `React as Mizu in 6 words or fewer. Match the energy to the score — harsh if low, hyped if high, deadpan if mid.`,
+      ].join(' ');
     }
 
     case 'notes_generated': {
-      return [
-        `The user just generated notes on the topic: "${data.topic}".`,
-        `React as Mizu. Tell them one specific thing to pay attention to in this topic.`,
-        `If you are not certain about the topic, say something about the value of good notes instead.`,
-      ].join('\n');
+      return `User generated notes on "${data.topic}". React as Mizu in 6 words or fewer.`;
     }
 
     case 'tab_switch': {
       const tabDescriptions = {
-        evaluate:  'moved to the Evaluate tab — they are about to test their knowledge by explaining a concept',
-        history:   'opened their Evaluation History — reviewing past scores',
-        analytics: 'opened Analytics — looking at their performance data',
-        learn:     'opened the Learn tab — about to study a programming language',
-        notes:     'opened Notes Generator — about to generate study notes',
-        chatbot:   'opened the AI Chatbot to talk with Mizu directly',
-        settings:  'opened Settings',
+        evaluate:  'the Evaluate tab, about to explain a concept',
+        history:   'their Evaluation History',
+        analytics: 'Analytics, looking at performance data',
+        learn:     'the Learn tab, about to study',
+        notes:     'Notes Generator',
+        chatbot:   'the AI Chatbot to talk to Mizu directly',
+        settings:  'Settings',
       };
-      const desc = tabDescriptions[data.tab] || `navigated to ${data.tab}`;
-      return [
-        `The user just ${desc}.`,
-        `React as Mizu with one short, context-appropriate line. Be specific to what they are about to do.`,
-      ].join('\n');
+      const desc = tabDescriptions[data.tab] || data.tab;
+      return `User just opened ${desc}. React as Mizu in 6 words or fewer.`;
     }
 
     case 'idle_short': {
-      return `The user has been idle on the "${data.tab}" tab for about ${data.seconds} seconds. React as Mizu — briefly nudge them back to work. Be specific to the tab they are on.`;
+      return `User has been idle about ${data.seconds} seconds on "${data.tab}". React as Mizu in 6 words or fewer.`;
     }
 
     case 'idle_long': {
-      return `The user has been completely idle for over ${data.seconds} seconds on the "${data.tab}" tab. React as Mizu — be a bit more pointed. They need a push.`;
+      return `User has been idle over ${data.seconds} seconds on "${data.tab}". React as Mizu in 6 words or fewer, a bit more pointed.`;
     }
 
     case 'typing_active': {
-      return `The user is actively typing an explanation about "${data.topic}" on the Evaluate tab. They have written about ${data.charCount} characters so far. Encourage them briefly as Mizu — react to the effort, not the quality (you haven't seen it yet).`;
+      return `User is actively typing an explanation about "${data.topic}". React as Mizu in 6 words or fewer, encouraging.`;
     }
 
     case 'typing_stopped': {
-      return `The user was typing an explanation about "${data.topic}" on the Evaluate tab but stopped after ${data.charCount} characters. They may be stuck. React as Mizu — nudge them to keep going or think about what's missing.`;
+      return `User stopped typing mid-explanation about "${data.topic}". React as Mizu in 6 words or fewer.`;
     }
 
     default:
-      return `The user is on the "${data.tab || 'dashboard'}" tab. Say something short and in-character as Mizu.`;
+      return `User is on "${data.tab || 'dashboard'}". Say something in character as Mizu, 6 words or fewer.`;
   }
 }
 
-// POST /api/mizu/react
+// Hard safety net: enforce word limit + strip any ellipsis even if the model ignores instructions
+function enforceShort(line) {
+  if (!line) return line;
+  let cleaned = line.replace(/\.\.\.|…/g, '').trim();
+  const words = cleaned.split(/\s+/);
+  if (words.length > 7) {
+    cleaned = words.slice(0, 7).join(' ');
+  }
+  // Ensure it ends with proper punctuation, not a dangling word
+  if (!/[.!?]$/.test(cleaned)) {
+    cleaned += '.';
+  }
+  return cleaned;
+}
+
 router.post('/react', async (req, res) => {
   const { trigger, data = {} } = req.body;
 
@@ -113,19 +153,19 @@ router.post('/react', async (req, res) => {
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages: [
-        { role: 'system',  content: MIZU_PERSONA },
-        { role: 'user',    content: userPrompt   },
+        { role: 'system', content: MIZU_PERSONA },
+        { role: 'user',   content: userPrompt   },
       ],
-      temperature: 0.75,
-      max_tokens: 80,   // hard cap — Mizu must be short
+      temperature: 0.85,
+      max_tokens: 20,   // hard cap — forces brevity at the token level
     });
 
-    const line = response.choices[0].message.content.trim();
+    const raw  = response.choices[0].message.content.trim();
+    const line = enforceShort(raw);
     res.json({ line });
 
   } catch (err) {
     console.error('Mizu react error:', err.message);
-    // Never crash the UI over a Mizu line — return a fallback silently
     res.json({ line: null });
   }
 });
