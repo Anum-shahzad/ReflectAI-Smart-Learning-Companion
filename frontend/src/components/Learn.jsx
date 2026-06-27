@@ -2,15 +2,38 @@ import { useState, useEffect } from 'react'
 import api from '../api/axios'
 
 // Map DB language names → W3Schools-style categories
-const CATEGORIES = [
-  { label: 'HTML & CSS',         color: '#e44d26', keys: ['html','css','bootstrap','tailwind','sass','scss','rwd'] },
-  { label: 'JavaScript',         color: '#f0db4f', keys: ['javascript','js','react','vue','angular','typescript','jquery','node','next','nuxt'] },
-  { label: 'Backend',            color: '#3572a5', keys: ['python','java','php','ruby','go','rust','kotlin','django','flask','spring','laravel'] },
-  { label: 'Database & SQL',     color: '#336791', keys: ['sql','mysql','postgresql','mongodb','sqlite','redis','database'] },
-  { label: 'Systems',            color: '#999',    keys: ['c++','cpp','c language','assembly','c#','csharp'] },
-  { label: 'Data & AI',          color: '#4584b6', keys: ['data','ai','machine learning','ml','r language','r programming','pandas','numpy','tensorflow','data science'] },
+ const CATEGORIES = [
+  {
+    label: 'Frontend',
+    color: '#e44d26',
+    keys: ['html', 'css', 'sass', 'scss', 'tailwind', 'bootstrap', 'react', 'typescript', 'next', 'angular', 'vue', 'jquery'],
+  },
+  {
+    label: 'Backend',
+    color: '#3572a5',
+    keys: ['node', 'express', 'python', 'django', 'fastapi', 'flask', 'java', 'spring', 'php', 'ruby', 'go', 'kotlin', 'rust'],
+  },
+  {
+    label: 'Database',
+    color: '#336791',
+    keys: ['sql', 'mysql', 'postgresql', 'postgres', 'mongodb', 'redis', 'sqlite', 'database', 'nosql'],
+  },
+  {
+    label: 'Tools & DevOps',
+    color: '#f05032',
+    keys: ['git', 'github', 'docker', 'linux', 'jest', 'cypress', 'ci', 'devops', 'aws', 'kubernetes'],
+  },
+  {
+    label: 'Systems',
+    color: '#888888',
+    keys: ['c++', 'cpp', 'c language', 'assembly', 'c#', 'csharp'],
+  },
+  {
+    label: 'Mobile',
+    color: '#61dafb',
+    keys: ['react native', 'flutter', 'mobile', 'android', 'ios', 'expo'],
+  },
 ]
-
 function matchCategory(langName) {
   const n = langName.toLowerCase()
   for (const cat of CATEGORIES) {
@@ -84,12 +107,12 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
 
     return (
        <div data-mizu-perch="learn-main">
-       <h1 className="font-serif text-2xl font-semibold mb-1">Learn</h1>
+       <h1 className="font-serif text-2xl font-semibold mb-3">Learn</h1>
         <p className="text-muted text-sm mb-8">
           Structured tutorials — click any language to start learning
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-10 mt-4">
           {grouped.map(cat => (
             <div key={cat.label}>
               <h2 className="text-sm font-bold mb-3 pb-2 border-b border-border"
