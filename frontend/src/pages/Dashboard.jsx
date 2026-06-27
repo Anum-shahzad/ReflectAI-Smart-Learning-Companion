@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useAuth }    from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -46,6 +46,9 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [tab,       setTab]       = useState('evaluate')
+  const [mizuEnabled, setMizuEnabled] = useState(
+  () => localStorage.getItem('reflectai_mizu') !== 'off'
+)
   const [lectureId, setLectureId] = useState(null)   // null = show Learn home/lang picker
   const [langId,    setLangId]    = useState(null)   // currently open language
 
@@ -73,6 +76,13 @@ export default function Dashboard() {
 
   // Whether the current view needs the full height without padding
   // (both Learn's language panel and LectureViewer use edge-to-edge layout)
+  const handleToggleMizu = () => {
+  setMizuEnabled(prev => {
+    const next = !prev
+    localStorage.setItem('reflectai_mizu', next ? 'on' : 'off')
+    return next
+  })
+}
   const isFullBleed = tab === 'learn'
 
   return (
@@ -129,8 +139,7 @@ export default function Dashboard() {
           {tab === 'analytics' && <Analytics />}
           {tab === 'notes'     && <NotesGenerator />}
           {tab === 'chatbot'   && <Chatbot />}
-          {tab === 'settings'  && <Settings user={user} />}
-
+          {tab === 'settings'  && <Settings user={user} mizuEnabled={mizuEnabled} onToggleMizu={handleToggleMizu} />}
           {tab === 'learn' && (
             lectureId
               ? <LectureViewer
@@ -147,18 +156,44 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {tab !== 'chatbot' && <MizuFloat activeTab={tab} />}
+       {tab !== 'chatbot' && mizuEnabled && <MizuFloat activeTab={tab} />}
     </div>
   )
 }
 
- function Settings({ user }) {
+function Settings({ user, mizuEnabled, onToggleMizu }) {
+  const [hovered, setHovered] = React.useState(false)
+
+  const handleToggleHover = async (entering) => {
+    setHovered(entering)
+    if (entering && mizuEnabled) {
+      // Mizu reacts dramatically when user hovers the off button
+      try {
+        const token = localStorage.getItem('reflectai_token')
+        if (!token) return
+        const res = await fetch('/api/mizu/react', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ trigger: 'mizu_toggle_hover', data: {} }),
+        })
+        const { line } = await res.json()
+        if (line && window.__mizuBus) {
+          window.__mizuBus.emit({ line, mood: 'concerned' })
+        }
+      } catch (_) {}
+    }
+  }
+
   return (
     <div>
       <h1 className="font-serif text-2xl font-semibold mb-1">Settings</h1>
       <p className="text-muted text-sm mb-8">Manage your account preferences</p>
       <div className="max-w-md space-y-6">
-          <div className="glass-card p-6" data-mizu-perch="settings-profile-card">
+
+        <div className="glass-card p-6" data-mizu-perch="settings-profile-card">
           <h2 className="font-semibold text-white mb-4">Profile</h2>
           <div className="space-y-4">
             <div>
@@ -172,6 +207,54 @@ export default function Dashboard() {
             <button className="btn-primary px-6 py-2.5 text-sm">Save changes</button>
           </div>
         </div>
+
+        {/* Mizu toggle card */}
+        <div className="glass-card p-6">
+          <h2 className="font-semibold text-white mb-1">Mizu Companion</h2>
+          <p className="text-muted text-xs mb-4">
+            Mizu is the AI companion that reacts to what you do. You can hide him if you prefer a quieter experience.
+          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white">
+                {mizuEnabled ? 'Mizu is active' : 'Mizu is hidden'}
+              </p>
+              <p className="text-xs text-muted mt-0.5">
+                {mizuEnabled ? 'Watching your every move.' : 'Gone. But is he really?'}
+              </p>
+            </div>
+            <button
+              onMouseEnter={() => handleToggleHover(true)}
+              onMouseLeave={() => handleToggleHover(false)}
+              onClick={onToggleMizu}
+              style={{
+                width: 52,
+                height: 28,
+                borderRadius: 14,
+                border: 'none',
+                cursor: 'pointer',
+                padding: 3,
+                background: mizuEnabled
+                  ? 'linear-gradient(135deg, #d13a97, #8b2fc9)'
+                  : 'rgba(255,255,255,0.08)',
+                transition: 'background 0.3s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: mizuEnabled ? 'flex-end' : 'flex-start',
+              }}
+            >
+              <div style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: 'white',
+                opacity: mizuEnabled ? 1 : 0.4,
+                transition: 'opacity 0.3s',
+              }} />
+            </button>
+          </div>
+        </div>
+
         <div className="glass-card p-6">
           <h2 className="font-semibold text-white mb-4">About ReflectAI</h2>
           <div className="space-y-2 text-sm text-muted">
@@ -180,6 +263,7 @@ export default function Dashboard() {
             <p className="text-xs text-muted2 mt-3">Powered by Groq · llama-3.3-70b-versatile</p>
           </div>
         </div>
+
       </div>
     </div>
   )
