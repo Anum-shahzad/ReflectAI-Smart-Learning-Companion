@@ -115,6 +115,10 @@ function buildPrompt(trigger, data) {
       return `User is actively typing an explanation about "${data.topic}". React as Mizu in 6 words or fewer, encouraging.`;
     }
 
+    case 'mizu_toggle_hover': {
+      return `The user is hovering over the button to turn Mizu off. React as Mizu — be dramatic, hurt, or passive-aggressive. 6 words max. No ellipsis. Examples: "So you don't love me." "Wow. Fine. Whatever." "Rude." "After everything I've done." "Betrayal." "I'm not crying. You are."`;
+    }
+
     case 'typing_stopped': {
       return `User stopped typing mid-explanation about "${data.topic}". React as Mizu in 6 words or fewer.`;
     }
