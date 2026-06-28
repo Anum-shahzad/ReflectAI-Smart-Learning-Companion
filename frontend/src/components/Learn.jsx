@@ -1,43 +1,50 @@
 import { useState, useEffect } from 'react'
 import api from '../api/axios'
 
-// Map DB language names → W3Schools-style categories
+  // Each key must be the EXACT lowercase language name from the database.
+// Exact matching prevents "javascript" from matching "java" as a substring.
  const CATEGORIES = [
-  {
-    label: 'Frontend',
-    color: '#e44d26',
-    keys: ['html', 'css', 'sass', 'scss', 'tailwind', 'bootstrap', 'react', 'typescript', 'next', 'angular', 'vue', 'jquery'],
-  },
   {
     label: 'Backend',
     color: '#3572a5',
-    keys: ['node', 'express', 'python', 'django', 'fastapi', 'flask', 'java', 'spring', 'php', 'ruby', 'go', 'kotlin', 'rust'],
+    keys: ['node.js', 'express.js', 'python', 'django', 'fastapi', 'flask', 'java', 'spring', 'laravel', 'php', 'ruby', 'go', 'kotlin'],
+  },
+  {
+    label: 'Frontend',
+    color: '#e44d26',
+    keys: ['javascript', 'html', 'css', 'sass / scss', 'tailwind css', 'bootstrap', 'react', 'typescript', 'next.js', 'angular', 'vue', 'jquery'],
   },
   {
     label: 'Database',
     color: '#336791',
-    keys: ['sql', 'mysql', 'postgresql', 'postgres', 'mongodb', 'redis', 'sqlite', 'database', 'nosql'],
+    keys: ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'sqlite'],
   },
   {
     label: 'Tools & DevOps',
     color: '#f05032',
-    keys: ['git', 'github', 'docker', 'linux', 'jest', 'cypress', 'ci', 'devops', 'aws', 'kubernetes'],
+    keys: ['git', 'github', 'docker', 'linux'],
+  },
+  {
+    label: 'Testing',
+    color: '#c21325',
+    keys: ['jest', 'cypress'],
   },
   {
     label: 'Systems',
     color: '#888888',
-    keys: ['c++', 'cpp', 'c language', 'assembly', 'c#', 'csharp'],
+    keys: ['c++', 'rust'],
   },
   {
     label: 'Mobile',
     color: '#61dafb',
-    keys: ['react native', 'flutter', 'mobile', 'android', 'ios', 'expo'],
+    keys: ['react native', 'flutter'],
   },
 ]
+ 
 function matchCategory(langName) {
-  const n = langName.toLowerCase()
+  const n = langName.toLowerCase().trim()
   for (const cat of CATEGORIES) {
-    if (cat.keys.some(k => n.includes(k))) return cat
+    if (cat.keys.some(k => k.toLowerCase() === n)) return cat
   }
   return { label: 'More', color: '#888', keys: [] }
 }
@@ -107,8 +114,8 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
 
     return (
        <div data-mizu-perch="learn-main">
-       <h1 className="font-serif text-2xl font-semibold mb-3">Learn</h1>
-        <p className="text-muted text-sm mb-8">
+        <h1 className="font-serif text-2xl font-semibold mb-2 pt-6">Learn</h1>
+          <p className="text-muted text-sm mb-8">
           Structured tutorials — click any language to start learning
         </p>
 
