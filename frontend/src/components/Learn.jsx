@@ -41,6 +41,7 @@ import api from '../api/axios'
   },
 ]
  
+
 function matchCategory(langName) {
   const n = langName.toLowerCase().trim()
   for (const cat of CATEGORIES) {
