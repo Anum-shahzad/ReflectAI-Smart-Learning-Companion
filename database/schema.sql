@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS programming_languages (
   id          INT PRIMARY KEY AUTO_INCREMENT,
   name        VARCHAR(100)  NOT NULL,
   description TEXT,
-  icon        VARCHAR(10)   DEFAULT '💻',
+  icon        VARCHAR(30)   DEFAULT 'code.svg',
   color       VARCHAR(20)   DEFAULT '#6366f1',
   created_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
 );
@@ -122,12 +122,12 @@ INSERT IGNORE INTO users (name, email, password) VALUES (
 );
 
 INSERT IGNORE INTO programming_languages (id, name, description, icon, color) VALUES
-(1, 'Python',     'Versatile language for AI, data science, and web dev.', '🐍', '#3b82f6'),
-(2, 'JavaScript', 'Language of the web — frontend and backend.',           '🌐', '#f59e0b'),
-(3, 'C++',        'High-performance systems and competitive programming.', '⚡', '#ef4444'),
-(4, 'Java',       'Enterprise and Android development powerhouse.',        '☕', '#f97316'),
-(5, 'Rust',       'Memory-safe systems language with zero-cost abstractions.', '🦀', '#dc2626'),
-(6, 'TypeScript', 'JavaScript with types — scales for large codebases.',   '🔷', '#6366f1');
+(1, 'Python',     'Versatile language for AI, data science, and web dev.', 'python.svg', '#3b82f6'),
+(2, 'JavaScript', 'Language of the web — frontend and backend.',           'javascript.svg', '#f59e0b'),
+(3, 'C++',        'High-performance systems and competitive programming.', 'cplusplus.svg', '#ef4444'),
+(4, 'Java',       'Enterprise and Android development powerhouse.',        'java.svg', '#f97316'),
+(5, 'Rust',       'Memory-safe systems language with zero-cost abstractions.', 'rust.svg', '#dc2626'),
+(6, 'TypeScript', 'JavaScript with types — scales for large codebases.',   'typescript.svg', '#6366f1');
 
 INSERT IGNORE INTO lectures (id, language_id, title, order_number, difficulty_level) VALUES
 (1, 1, 'Introduction to Python',        1, 'beginner'),

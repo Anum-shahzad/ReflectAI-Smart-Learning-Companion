@@ -6,8 +6,8 @@ USE reflectai;
 
 -- Add Java as a programming language (id=8, avoids conflict with existing ids 1-7)
 INSERT INTO programming_languages (id, name, description, icon, color) VALUES
-(8, 'Java', 'A powerful, object-oriented language used in enterprise applications, Android, and web backends.', '☕', '#f97316')
-ON DUPLICATE KEY UPDATE name='Java', description='A powerful, object-oriented language used in enterprise applications, Android, and web backends.', icon='☕', color='#f97316';
+(8, 'Java', 'A powerful, object-oriented language used in enterprise applications, Android, and web backends.', 'java.svg', '#f97316')
+ON DUPLICATE KEY UPDATE name='Java', description='A powerful, object-oriented language used in enterprise applications, Android, and web backends.', icon='java.svg', color='#f97316';
 
 -- Clean re-seed: remove existing Java lectures if any
 DELETE FROM lectures WHERE id BETWEEN 201 AND 214;

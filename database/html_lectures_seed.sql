@@ -6,8 +6,8 @@ USE reflectai;
 
 -- Add HTML as a programming language
 INSERT INTO programming_languages (id, name, description, icon, color) VALUES
-(7, 'HTML', 'The standard markup language for creating web pages and web applications.', '🔶', '#e44d26')
-ON DUPLICATE KEY UPDATE name='HTML', description='The standard markup language for creating web pages and web applications.', icon='🔶', color='#e44d26';
+(7, 'HTML', 'The standard markup language for creating web pages and web applications.', 'html.svg', '#e44d26')
+ON DUPLICATE KEY UPDATE name='HTML', description='The standard markup language for creating web pages and web applications.', icon='html.svg', color='#e44d26';
 
 -- Delete existing HTML lectures (ids 101-114) for clean re-seed
 DELETE FROM lectures WHERE id BETWEEN 101 AND 114;
