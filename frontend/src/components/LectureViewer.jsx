@@ -24,6 +24,7 @@ function renderMarkdown(text) {
     .replace(/\n\n/g, '<br/>')
 }
 
+
 // ── Main component ───────────────────────────────────────────────────────────
 export default function LectureViewer({ lectureId, langId, onBack, onNavigateLecture }) {
   const [lecture,    setLecture]    = useState(null)
