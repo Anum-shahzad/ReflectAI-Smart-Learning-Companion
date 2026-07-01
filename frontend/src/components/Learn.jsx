@@ -135,8 +135,15 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
                     <button key={lang.id} onClick={() => openLanguage(lang)}
                       className="w-full flex items-center justify-between px-2 py-2 rounded-lg text-left group transition-all hover:bg-white/[0.04]">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-lg shrink-0">{lang.icon}</span>
-                        <div className="min-w-0">
+                         
+                        <span className="shrink-0" style={{ width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img
+                             src={`/src/assets/icons/${lang.icon}`}
+                             alt={lang.name}
+                             style={{ width: 22, height: 22, objectFit: 'contain' }}
+                          />
+                        </span>
+                         <div className="min-w-0">
                           <span className="text-sm text-white/90 group-hover:text-white group-hover:underline underline-offset-2 leading-none">
                             Learn {lang.name}
                           </span>
@@ -184,7 +191,11 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
             ← All Languages
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{activeLang.icon}</span>
+             <img
+    src={`/src/assets/icons/${activeLang.icon}`}
+    alt={activeLang.name}
+    style={{ width: 28, height: 28, objectFit: 'contain' }}
+  />
             <div>
               <div className="text-sm font-semibold text-white">{activeLang.name}</div>
               <div className="text-[10px] text-muted mt-0.5">
@@ -241,8 +252,15 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
 
       {/* Right: pick a topic prompt */}
       <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-        <div className="text-5xl mb-5">{activeLang.icon}</div>
-        <h2 className="font-serif text-xl font-semibold mb-2">
+        <div className="mb-5">
+    <img
+      src={`/src/assets/icons/${activeLang.icon}`}
+      alt={activeLang.name}
+      style={{ width: 64, height: 64, objectFit: 'contain' }}
+    />
+  </div>
+
+         <h2 className="font-serif text-xl font-semibold mb-2">
           {activeLang.name} Tutorial
         </h2>
         <p className="text-sm text-muted mb-6 max-w-xs leading-relaxed">
