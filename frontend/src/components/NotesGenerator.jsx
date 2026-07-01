@@ -8,7 +8,7 @@ function renderMarkdown(text) {
   if (!text) return ''
   return text
     .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-white mt-5 mb-2">$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2 class="text-lg font-semibold text-white mt-6 mb-3 pb-2" style="border-bottom:1px solid #2e2e2e">$2</h2>')
+    .replace(/^## (.+)$/gm,  '<h2 class="text-lg font-semibold text-white mt-6 mb-3 pb-2" style="border-bottom:1px solid #2e2e2e">$1</h2>')
     .replace(/^# (.+)$/gm,   '<h1 class="text-xl font-bold text-white mt-4 mb-4">$1</h1>')
     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em class="text-pink-300">$1</em>')
@@ -160,8 +160,8 @@ export default function NotesGenerator() {
           )}
 
           {/* Result */}
-          {content && !loading && (
-            <div className="glass-card p-6 animate-fadeup">
+            {content && !loading && (
+              <div className="glass-card p-6 animate-fadeup" data-mizu-perch="notes-content">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h2 className="font-serif text-lg font-semibold">{topic}</h2>
