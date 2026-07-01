@@ -136,6 +136,7 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
                       className="w-full flex items-center justify-between px-2 py-2 rounded-lg text-left group transition-all hover:bg-white/[0.04]">
                       <div className="flex items-center gap-2.5 min-w-0">
                          
+                         
                         <span className="shrink-0" style={{ width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                         <img
                              src={`/src/assets/icons/${lang.icon}`}
