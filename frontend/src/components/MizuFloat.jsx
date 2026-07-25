@@ -27,7 +27,7 @@ const PERCH_MAP = {
     { id: 'analytics-weekly'     },
   ],
   settings: [{ id: 'settings-profile-card', useCardX: true }],
-  learn:    [{ fixedY: 125 }],   // no card — fixed position on right wall
+  learn:    [{ fixedY: 144 }],   // no card — fixed position on right wall
 }
 
 function trimLine(line) {
