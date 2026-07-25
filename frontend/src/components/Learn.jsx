@@ -114,8 +114,8 @@ export default function Learn({ onOpenLecture, selectedLangId }) {
     if (rest.length) grouped.push({ label: 'More', color: '#888', langs: rest })
 
     return (
-       <div data-mizu-perch="learn-main">
-        <h1 className="font-serif text-2xl font-semibold mb-2 pt-6">Learn</h1>
+       <div data-mizu-perch="learn-main" className="p-10">
+        <h1 className="font-serif text-2xl font-semibold mb-2">Learn</h1>
           <p className="text-muted text-sm mb-8">
           Structured tutorials — click any language to start learning
         </p>
