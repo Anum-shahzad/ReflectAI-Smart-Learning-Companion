@@ -35,13 +35,23 @@ CREATE TABLE IF NOT EXISTS saved_notes (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS chatbot_history (
+CREATE TABLE IF NOT EXISTS chat_conversations (
   id         INT PRIMARY KEY AUTO_INCREMENT,
   user_id    INT          NOT NULL,
-  message    TEXT         NOT NULL,
-  role       ENUM('user','assistant') NOT NULL,
+  title      VARCHAR(255) DEFAULT 'New Chat',
   created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chatbot_history (
+  id              INT PRIMARY KEY AUTO_INCREMENT,
+  user_id         INT          NOT NULL,
+  conversation_id INT          NOT NULL,
+  message         TEXT         NOT NULL,
+  role            ENUM('user','assistant') NOT NULL,
+  created_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS programming_languages (
