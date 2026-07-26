@@ -28,25 +28,39 @@ const SUGGESTIONS = [
 ]
 
 export default function Chatbot() {
-  const [messages,  setMessages]  = useState([])
-  const [input,     setInput]     = useState('')
-  const [loading,   setLoading]   = useState(false)
-  const [mood,      setMood]      = useState('idle')
-  const [histLoad,  setHistLoad]  = useState(true)
+  const [messages,       setMessages]       = useState([])
+  const [input,          setInput]          = useState('')
+  const [loading,        setLoading]        = useState(false)
+  const [mood,           setMood]           = useState('idle')
+  const [histLoad,       setHistLoad]       = useState(true)
+  const [conversations,  setConversations]  = useState([])
+  const [conversationId, setConversationId] = useState(null)
   const bottomRef  = useRef(null)
   const inputRef   = useRef(null)
 
-  useEffect(() => { loadHistory() }, [])
+  useEffect(() => { init() }, [])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
 
-  const loadHistory = async () => {
+  // On mount: load the conversation list, then open the most recent one (if any)
+  const init = async () => {
     try {
-      const { data } = await api.get('/chat/history')
-      if (data.history?.length) {
-        setMessages(data.history.map(h => ({ role: h.role, content: h.message, ts: h.created_at })))
-      }
+      const { data } = await api.get('/chat/conversations')
+      const convos = data.conversations || []
+      setConversations(convos)
+      if (convos.length) await openConversation(convos[0].id)
     } catch {}
     finally { setHistLoad(false) }
+  }
+
+  const openConversation = async (id) => {
+    setConversationId(id)
+    try {
+      const { data } = await api.get('/chat/history', { params: { conversation_id: id } })
+      setMessages((data.history || []).map(h => ({ role: h.role, content: h.message, ts: h.created_at })))
+    } catch {
+      setMessages([])
+    }
+    setMood('idle')
   }
 
   const send = async () => {
@@ -61,9 +75,20 @@ export default function Chatbot() {
 
     try {
       const history = messages.slice(-20)
-      const { data } = await api.post('/chat', { message: msg, history })
+      const { data } = await api.post('/chat', { message: msg, history, conversation_id: conversationId })
       const aiMsg = { role: 'assistant', content: data.reply, ts: new Date().toISOString() }
       setMessages(prev => [...prev, aiMsg])
+
+      // First message of a brand new chat — backend created the conversation,
+      // so pick up its id and refresh the sidebar list to show it.
+      if (!conversationId && data.conversation_id) {
+        setConversationId(data.conversation_id)
+        try {
+          const refreshed = await api.get('/chat/conversations')
+          setConversations(refreshed.data.conversations || [])
+        } catch {}
+      }
+
       // Pick mood based on response length/content
       if (data.reply.includes('impressed') || data.reply.includes('clean') || data.reply.includes('🔓')) {
         setMood('impressed')
@@ -89,11 +114,40 @@ export default function Chatbot() {
     }
   }
 
+  // Deletes EVERY conversation this user has — full wipe
   const clearChat = async () => {
     try {
       await api.delete('/chat/history')
+      setConversations([])
+      setConversationId(null)
       setMessages([])
       setMood('idle')
+    } catch {}
+  }
+
+  // Deletes a single conversation from the list (e.g. hovering a past chat)
+  const deleteConversation = async (id, e) => {
+    e.stopPropagation()
+    try {
+      await api.delete(`/chat/conversations/${id}`)
+      setConversations(prev => prev.filter(c => c.id !== id))
+      if (id === conversationId) {
+        setConversationId(null)
+        setMessages([])
+        setMood('idle')
+      }
+    } catch {}
+  }
+
+  // Starts a real new conversation thread server-side, switches to it
+  const newChat = async () => {
+    try {
+      const { data } = await api.post('/chat/conversations')
+      setConversations(prev => [{ id: data.id, title: data.title, last_message: null }, ...prev])
+      setConversationId(data.id)
+      setMessages([])
+      setMood('idle')
+      inputRef.current?.focus()
     } catch {}
   }
 
@@ -140,9 +194,31 @@ export default function Chatbot() {
           </div>
         </div>
 
-        {messages.length > 0 && (
-          <button onClick={clearChat} className="text-xs text-muted hover:text-danger transition-colors text-center py-2">
-            🗑 Clear history
+        {/* Past conversations */}
+        {conversations.length > 0 && (
+          <div className="glass-card p-4 flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="text-[10px] font-mono text-muted2 uppercase tracking-widest mb-3 shrink-0">Past Chats</div>
+            <div className="flex flex-col gap-1 overflow-y-auto">
+              {conversations.map(c => (
+                <button key={c.id} onClick={() => openConversation(c.id)}
+                  className="group w-full text-left px-2 py-2 rounded-lg transition-all flex items-center justify-between gap-2"
+                  style={{ background: c.id === conversationId ? 'rgba(209,58,151,0.12)' : 'transparent' }}>
+                  <span className={`text-xs truncate ${c.id === conversationId ? 'text-white' : 'text-muted group-hover:text-white'}`}>
+                    {c.title || 'New Chat'}
+                  </span>
+                  <span onClick={(e) => deleteConversation(c.id, e)}
+                    className="text-muted2 hover:text-danger text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    ✕
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {conversations.length > 0 && (
+          <button onClick={clearChat} className="text-xs text-muted hover:text-danger transition-colors text-center py-2 shrink-0">
+            🗑 Clear all history
           </button>
         )}
       </div>
@@ -155,9 +231,15 @@ export default function Chatbot() {
             <h2 className="font-semibold text-white">Chat with Mizu</h2>
             <p className="text-xs text-muted">Session-based · responses powered by Groq</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse-dot"/>
-            <span className="text-xs text-teal">Online</span>
+          <div className="flex items-center gap-4">
+            <button onClick={newChat}
+              className="text-xs px-3 py-1.5 rounded-full border border-border text-muted hover:text-white hover:border-accent/40 transition-all">
+              + New Chat
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse-dot"/>
+              <span className="text-xs text-teal">Online</span>
+            </div>
           </div>
         </div>
 
