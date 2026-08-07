@@ -163,7 +163,7 @@ export default function Chatbot() {
     <div className="flex gap-6 h-[calc(100vh-160px)]">
       {/* Left: Mizu panel */}
       <div className="w-56 shrink-0 flex flex-col gap-4">
-        <div className="glass-card p-4 flex flex-col items-center gap-3">
+        <div className="glass-card p-4 flex flex-col items-center gap-3 shrink-0">
           <MizuCharacter mood={mood} size={120} />
           <div className="text-center">
             <div className="text-xs font-mono text-pink-400 uppercase tracking-widest">Mizu</div>
@@ -182,7 +182,7 @@ export default function Chatbot() {
         </div>
 
         {/* Quick suggestions */}
-        <div className="glass-card p-4">
+        <div className="glass-card p-4 shrink-0">
           <div className="text-[10px] font-mono text-muted2 uppercase tracking-widest mb-3">Quick Ask</div>
           <div className="flex flex-col gap-1.5">
             {SUGGESTIONS.slice(0, 4).map(s => (
