@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useId } from 'react'
 
 const MOODS = {
   idle: {
@@ -102,6 +102,16 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
   const mouseRef  = useRef({ x: null, y: null })  // current mouse in page coords
   const [currentMood, setCurrentMood] = useState(mood)
 
+  // Stable, unique per-mounted-instance id (SSR-safe, StrictMode-safe —
+  // unlike Math.random() or a module-level counter). Used to namespace
+  // every internal SVG id so two or more MizuCharacters can render on the
+  // same page at once without colliding <defs> (gradients/filters) or
+  // getElementById lookups. Sanitized because useId() can return characters
+  // (":", "«", "»") that are awkward inside an id used in url(#...).
+  const rawUid = useId()
+  const uid = rawUid.replace(/[^a-zA-Z0-9]/g, '')
+  const id = (name) => `mizu-${name}-${uid}`
+
   useEffect(() => { setCurrentMood(mood) }, [mood])
 
   // Apply mood attributes to SVG
@@ -110,12 +120,12 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
     if (!svg) return
     const m = MOODS[currentMood] || MOODS.idle
 
-    const set = (id, attr, val) => {
-      const el = svg.getElementById(id)
+    const set = (name, attr, val) => {
+      const el = svg.getElementById(id(name))
       if (el) el.setAttribute(attr, val)
     }
-    const setStyle = (id, prop, val) => {
-      const el = svg.getElementById(id)
+    const setStyle = (name, prop, val) => {
+      const el = svg.getElementById(id(name))
       if (el) el.style[prop] = val
     }
 
@@ -138,7 +148,8 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
     setStyle('sparkles',  'opacity', m.sparkles)
     setStyle('tongue',    'opacity', m.tongue)
     setStyle('splatGroup','opacity', m.splats)
-  }, [currentMood])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMood, uid])
 
   // Global mouse tracking — listens on the window so it always works
   useEffect(() => {
@@ -166,8 +177,8 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
       const sy = 1 + Math.sin(bRef.current * 0.8) * 0.018
       const sk = Math.sin(bRef.current * 1.4) * 1.5
 
-      bodyIds.forEach(id => {
-        const el = svg.getElementById(id)
+      bodyIds.forEach(name => {
+        const el = svg.getElementById(id(name))
         if (el) {
           el.style.transform = `translateY(${fy}px) scaleX(${sx}) scaleY(${sy}) skewX(${sk}deg)`
           el.style.transformOrigin = '140px 160px'
@@ -176,8 +187,8 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
 
       // Random blink
       if (Math.random() < 0.0012) {
-        const wL = svg.getElementById('eyeWhiteL')
-        const wR = svg.getElementById('eyeWhiteR')
+        const wL = svg.getElementById(id('eyeWhiteL'))
+        const wR = svg.getElementById(id('eyeWhiteR'))
         if (wL && wR) {
           const ryL = wL.getAttribute('ry')
           const ryR = wR.getAttribute('ry')
@@ -219,10 +230,10 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
         // Apply float offset so eyes move with the body float
         const floatOffsetY = fy * (320 / rect.height)  // convert px float to SVG units approx
 
-        const setEyePos = (pupilId, irisId, shineId, bx, by, ox, oy) => {
-          const pupil = svg.getElementById(pupilId)
-          const iris  = svg.getElementById(irisId)
-          const shine = svg.getElementById(shineId)
+        const setEyePos = (pupilName, irisName, shineName, bx, by, ox, oy) => {
+          const pupil = svg.getElementById(id(pupilName))
+          const iris  = svg.getElementById(id(irisName))
+          const shine = svg.getElementById(id(shineName))
           if (pupil) { pupil.setAttribute('cx', bx + ox); pupil.setAttribute('cy', by + oy) }
           if (iris)  { iris.setAttribute('cx', bx + ox);  iris.setAttribute('cy', by + oy) }
           if (shine) { shine.setAttribute('cx', bx + ox + 3); shine.setAttribute('cy', by + oy - 3) }
@@ -236,108 +247,109 @@ export default function MizuCharacter({ mood = 'idle', size = 160 }) {
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid])
 
   return (
     <div ref={wrapRef} style={{ width: size, height: size * (320/280), flexShrink: 0 }}>
       <svg
         ref={svgRef}
-        id="mizuSvg"
+        id={id('mizuSvg')}
         viewBox="0 0 280 320"
         xmlns="http://www.w3.org/2000/svg"
         style={{ width: '100%', height: '100%', overflow: 'visible' }}
       >
         <defs>
-          <radialGradient id="bodyGrad" cx="45%" cy="38%" r="65%">
+          <radialGradient id={id('bodyGrad')} cx="45%" cy="38%" r="65%">
             <stop offset="0%" stopColor="#ff2d78" stopOpacity="0.55"/>
             <stop offset="45%" stopColor="#cc1060" stopOpacity="0.35"/>
             <stop offset="100%" stopColor="#4a0025" stopOpacity="0.2"/>
           </radialGradient>
-          <radialGradient id="shimGrad" cx="40%" cy="35%" r="55%">
+          <radialGradient id={id('shimGrad')} cx="40%" cy="35%" r="55%">
             <stop offset="0%" stopColor="#ff6eb0" stopOpacity="0.5"/>
             <stop offset="60%" stopColor="#ff2d78" stopOpacity="0.1"/>
             <stop offset="100%" stopColor="#ff2d78" stopOpacity="0"/>
           </radialGradient>
-          <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+          <radialGradient id={id('coreGrad')} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="1"/>
             <stop offset="35%" stopColor="#ff6eb0" stopOpacity="0.85"/>
             <stop offset="100%" stopColor="#ff2d78" stopOpacity="0"/>
           </radialGradient>
-          <linearGradient id="hlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={id('hlGrad')} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35"/>
             <stop offset="100%" stopColor="#ff6eb0" stopOpacity="0"/>
           </linearGradient>
-          <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+          <filter id={id('glow')} x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur stdDeviation="5" result="b"/>
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
-          <filter id="bigGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <filter id={id('bigGlow')} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="10" result="b"/>
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
-          <filter id="softBlur" x="-20%" y="-20%" width="140%" height="140%">
+          <filter id={id('softBlur')} x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3"/>
           </filter>
         </defs>
 
-        <path id="bodyGlow"
+        <path id={id('bodyGlow')}
           d="M140,48 C198,38 248,72 252,132 C256,188 224,240 180,260 C158,272 122,274 98,264 C52,244 28,192 32,136 C36,80 82,58 140,48Z"
           fill="none" stroke="rgba(255,45,120,0.4)" strokeWidth="1"
-          filter="url(#bigGlow)" opacity="0.7"/>
-        <path id="bodyBlob"
+          filter={`url(#${id('bigGlow')})`} opacity="0.7"/>
+        <path id={id('bodyBlob')}
           d="M140,52 C195,42 244,76 248,134 C252,188 220,238 178,258 C156,270 120,272 96,262 C52,242 30,190 34,136 C38,82 85,62 140,52Z"
-          fill="url(#bodyGrad)" stroke="rgba(255,45,120,0.7)" strokeWidth="1.5"/>
-        <path id="shimBlob"
+          fill={`url(#${id('bodyGrad')})`} stroke="rgba(255,45,120,0.7)" strokeWidth="1.5"/>
+        <path id={id('shimBlob')}
           d="M140,64 C188,56 228,86 230,136 C232,180 204,222 170,240 C152,250 124,250 104,240 C68,224 52,182 56,136 C60,90 92,72 140,64Z"
-          fill="url(#shimGrad)" opacity="0.8"/>
-        <path id="hlStreak"
+          fill={`url(#${id('shimGrad')})`} opacity="0.8"/>
+        <path id={id('hlStreak')}
           d="M94,80 Q110,64 138,62 Q120,72 106,90Z"
-          fill="url(#hlGrad)" opacity="0.7"/>
+          fill={`url(#${id('hlGrad')})`} opacity="0.7"/>
 
-        <path id="drip1" d="M100,258 Q96,282 98,295 Q100,304 103,295 Q106,280 100,258Z" fill="rgba(255,45,120,0.5)" stroke="rgba(255,45,120,0.6)" strokeWidth="0.8"/>
-        <path id="drip2" d="M175,255 Q172,275 174,286 Q176,293 179,286 Q182,273 175,255Z" fill="rgba(255,45,120,0.4)" stroke="rgba(255,45,120,0.5)" strokeWidth="0.8"/>
-        <path id="drip3" d="M140,268 Q137,286 139,296 Q141,302 143,296 Q145,284 140,268Z" fill="rgba(255,110,176,0.45)" stroke="rgba(255,110,176,0.5)" strokeWidth="0.7"/>
+        <path id={id('drip1')} d="M100,258 Q96,282 98,295 Q100,304 103,295 Q106,280 100,258Z" fill="rgba(255,45,120,0.5)" stroke="rgba(255,45,120,0.6)" strokeWidth="0.8"/>
+        <path id={id('drip2')} d="M175,255 Q172,275 174,286 Q176,293 179,286 Q182,273 175,255Z" fill="rgba(255,45,120,0.4)" stroke="rgba(255,45,120,0.5)" strokeWidth="0.8"/>
+        <path id={id('drip3')} d="M140,268 Q137,286 139,296 Q141,302 143,296 Q145,284 140,268Z" fill="rgba(255,110,176,0.45)" stroke="rgba(255,110,176,0.5)" strokeWidth="0.7"/>
 
-        <circle id="fDrop1" cx="60" cy="200" r="5" fill="rgba(255,45,120,0.6)"/>
-        <circle id="fDrop2" cx="224" cy="190" r="4" fill="rgba(255,45,120,0.5)"/>
-        <circle id="fDrop3" cx="52" cy="160" r="3" fill="rgba(255,110,176,0.55)"/>
-        <circle id="fDrop4" cx="232" cy="155" r="2.5" fill="rgba(255,110,176,0.45)"/>
+        <circle id={id('fDrop1')} cx="60" cy="200" r="5" fill="rgba(255,45,120,0.6)"/>
+        <circle id={id('fDrop2')} cx="224" cy="190" r="4" fill="rgba(255,45,120,0.5)"/>
+        <circle id={id('fDrop3')} cx="52" cy="160" r="3" fill="rgba(255,110,176,0.55)"/>
+        <circle id={id('fDrop4')} cx="232" cy="155" r="2.5" fill="rgba(255,110,176,0.45)"/>
 
-        <ellipse id="coreGlow" cx="140" cy="148" rx="44" ry="48" fill="url(#coreGrad)" filter="url(#glow)" opacity="0.85"/>
+        <ellipse id={id('coreGlow')} cx="140" cy="148" rx="44" ry="48" fill={`url(#${id('coreGrad')})`} filter={`url(#${id('glow')})`} opacity="0.85"/>
 
-        <g id="brows">
-          <path id="browL" d="M105,112 Q116,108 126,112" fill="none" stroke="rgba(255,110,176,0.9)" strokeWidth="3" strokeLinecap="round"/>
-          <path id="browR" d="M154,112 Q164,108 175,112" fill="none" stroke="rgba(255,110,176,0.9)" strokeWidth="3" strokeLinecap="round"/>
+        <g id={id('brows')}>
+          <path id={id('browL')} d="M105,112 Q116,108 126,112" fill="none" stroke="rgba(255,110,176,0.9)" strokeWidth="3" strokeLinecap="round"/>
+          <path id={id('browR')} d="M154,112 Q164,108 175,112" fill="none" stroke="rgba(255,110,176,0.9)" strokeWidth="3" strokeLinecap="round"/>
         </g>
-        <g id="eyes">
-          <ellipse id="eyeBgL" cx="116" cy="132" rx="15" ry="16" fill="rgba(255,200,230,0.15)"/>
-          <ellipse id="eyeWhiteL" cx="116" cy="132" rx="11" ry="12" fill="rgba(255,220,240,0.9)"/>
-          <ellipse id="eyeIrisL" cx="116" cy="132" rx="6" ry="7" fill="#1a0010"/>
-          <ellipse id="eyePupilL" cx="116" cy="132" rx="3.5" ry="4" fill="#ff2d78" filter="url(#glow)"/>
-          <ellipse id="eyeShineL" cx="119" cy="129" rx="2.5" ry="2.5" fill="white" opacity="0.9"/>
-          <ellipse id="eyeBgR" cx="164" cy="132" rx="15" ry="16" fill="rgba(255,200,230,0.15)"/>
-          <ellipse id="eyeWhiteR" cx="164" cy="132" rx="11" ry="12" fill="rgba(255,220,240,0.9)"/>
-          <ellipse id="eyeIrisR" cx="164" cy="132" rx="6" ry="7" fill="#1a0010"/>
-          <ellipse id="eyePupilR" cx="164" cy="132" rx="3.5" ry="4" fill="#ff2d78" filter="url(#glow)"/>
-          <ellipse id="eyeShineR" cx="167" cy="129" rx="2.5" ry="2.5" fill="white" opacity="0.9"/>
+        <g id={id('eyes')}>
+          <ellipse id={id('eyeBgL')} cx="116" cy="132" rx="15" ry="16" fill="rgba(255,200,230,0.15)"/>
+          <ellipse id={id('eyeWhiteL')} cx="116" cy="132" rx="11" ry="12" fill="rgba(255,220,240,0.9)"/>
+          <ellipse id={id('eyeIrisL')} cx="116" cy="132" rx="6" ry="7" fill="#1a0010"/>
+          <ellipse id={id('eyePupilL')} cx="116" cy="132" rx="3.5" ry="4" fill="#ff2d78" filter={`url(#${id('glow')})`}/>
+          <ellipse id={id('eyeShineL')} cx="119" cy="129" rx="2.5" ry="2.5" fill="white" opacity="0.9"/>
+          <ellipse id={id('eyeBgR')} cx="164" cy="132" rx="15" ry="16" fill="rgba(255,200,230,0.15)"/>
+          <ellipse id={id('eyeWhiteR')} cx="164" cy="132" rx="11" ry="12" fill="rgba(255,220,240,0.9)"/>
+          <ellipse id={id('eyeIrisR')} cx="164" cy="132" rx="6" ry="7" fill="#1a0010"/>
+          <ellipse id={id('eyePupilR')} cx="164" cy="132" rx="3.5" ry="4" fill="#ff2d78" filter={`url(#${id('glow')})`}/>
+          <ellipse id={id('eyeShineR')} cx="167" cy="129" rx="2.5" ry="2.5" fill="white" opacity="0.9"/>
         </g>
-        <g id="lids" opacity="0">
-          <path id="lidL" d="M105,126 Q116,120 127,126" fill="#cc1060" opacity="0.9"/>
-          <path id="lidR" d="M153,126 Q164,120 175,126" fill="#cc1060" opacity="0.9"/>
+        <g id={id('lids')} opacity="0">
+          <path id={id('lidL')} d="M105,126 Q116,120 127,126" fill="#cc1060" opacity="0.9"/>
+          <path id={id('lidR')} d="M153,126 Q164,120 175,126" fill="#cc1060" opacity="0.9"/>
         </g>
-        <path id="mouth" d="M122,170 Q140,184 158,170" fill="none" stroke="rgba(255,110,176,0.9)" strokeWidth="3" strokeLinecap="round"/>
-        <path id="tongue" d="M134,174 Q140,185 146,174 Q143,190 137,190 Q131,190 134,174Z" fill="#ff2d78" opacity="0" filter="url(#glow)"/>
+        <path id={id('mouth')} d="M122,170 Q140,184 158,170" fill="none" stroke="rgba(255,110,176,0.9)" strokeWidth="3" strokeLinecap="round"/>
+        <path id={id('tongue')} d="M134,174 Q140,185 146,174 Q143,190 137,190 Q131,190 134,174Z" fill="#ff2d78" opacity="0" filter={`url(#${id('glow')})`}/>
 
-        <ellipse id="blushL" cx="95" cy="148" rx="16" ry="9" fill="rgba(255,45,120,0.25)" opacity="0" filter="url(#softBlur)"/>
-        <ellipse id="blushR" cx="185" cy="148" rx="16" ry="9" fill="rgba(255,45,120,0.25)" opacity="0" filter="url(#softBlur)"/>
-        <path id="sweat" d="M190,118 Q188,130 190,136 Q192,130 194,118 Q192,112 190,118Z" fill="rgba(180,200,255,0.7)" opacity="0"/>
+        <ellipse id={id('blushL')} cx="95" cy="148" rx="16" ry="9" fill="rgba(255,45,120,0.25)" opacity="0" filter={`url(#${id('softBlur')})`}/>
+        <ellipse id={id('blushR')} cx="185" cy="148" rx="16" ry="9" fill="rgba(255,45,120,0.25)" opacity="0" filter={`url(#${id('softBlur')})`}/>
+        <path id={id('sweat')} d="M190,118 Q188,130 190,136 Q192,130 194,118 Q192,112 190,118Z" fill="rgba(180,200,255,0.7)" opacity="0"/>
 
-        <g id="sparkles" opacity="0">
-          <text x="44" y="130" fontSize="18" fill="#ff6eb0" filter="url(#glow)">✦</text>
-          <text x="216" y="125" fontSize="14" fill="#ff2d78" filter="url(#glow)">✦</text>
+        <g id={id('sparkles')} opacity="0">
+          <text x="44" y="130" fontSize="18" fill="#ff6eb0" filter={`url(#${id('glow')})`}>✦</text>
+          <text x="216" y="125" fontSize="14" fill="#ff2d78" filter={`url(#${id('glow')})`}>✦</text>
           <text x="60" y="175" fontSize="10" fill="#ff6eb0">✦</text>
         </g>
-        <g id="splatGroup" opacity="0">
+        <g id={id('splatGroup')} opacity="0">
           <circle cx="42" cy="140" r="6" fill="rgba(255,45,120,0.6)"/>
           <circle cx="240" cy="130" r="8" fill="rgba(255,45,120,0.5)"/>
           <circle cx="56" cy="105" r="4" fill="rgba(255,110,176,0.7)"/>

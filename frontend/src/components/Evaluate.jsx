@@ -277,8 +277,8 @@ export default function Evaluate() {
 
       {/* Results */}
       {result && (
-        <div ref={resultsRef}>
-          <div className="flex items-center gap-2 mb-5">
+            <div ref={resultsRef} data-mizu-perch="evaluate-results">
+            <div className="flex items-center gap-2 mb-5">
             <div className="w-1.5 h-1.5 rounded-full bg-teal" style={{ boxShadow: '0 0 8px #00c896' }} />
             <span className="text-xs text-muted uppercase tracking-widest font-semibold">Evaluation complete</span>
           </div>

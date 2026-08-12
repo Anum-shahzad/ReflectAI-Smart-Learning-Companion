@@ -128,6 +128,31 @@
   0%, 100% { box-shadow: 0 0 20px rgba(255,45,120,0.3); }
   50%       { box-shadow: 0 0 40px rgba(255,45,120,0.6); }
 }
+ 
+/* ── Landing page: infinite marquee ── */
+@keyframes scroll-x {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee { animation: scroll-x 34s linear infinite; }
+
+/* ── Landing page: floating hero tags ── */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-9px); }
+}
+.animate-bob { animation: bob 5s ease-in-out infinite; }
+
+/* ── Landing page: floating Mizu widget ── */
+@keyframes mizuFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-8px) rotate(-2deg); }
+}
+.animate-mizu-float { animation: mizuFloat 4.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee, .animate-bob, .animate-mizu-float { animation: none !important; }
+}
 
 /* Prose-like spacing for notes/lectures */
 .prose-custom h2 { font-size: 1.05rem; font-weight: 700; color: #fff; margin: 1.4rem 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid #2e2e2e; }
