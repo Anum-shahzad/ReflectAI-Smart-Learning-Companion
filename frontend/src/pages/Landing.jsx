@@ -26,10 +26,10 @@ import iconTailwind from '../assets/icons/tailwindcss.svg'
 import shotEvaluate from '../assets/landing/evaluate.png'
 import shotAnalytics from '../assets/landing/analytics.png'
 import shotLearn from '../assets/landing/learn_overview.png'
-import shotLecture from '../assets/landing/html_lecture.png'
+import shotLecture from '../assets/landing/Python_lecture.png'
 import shotNotes from '../assets/landing/notes.png'
 import shotHistory from '../assets/landing/history.png'
-import shotChat from '../assets/landing/settings_mizu.png'
+import shotChat from '../assets/landing/mizu_chat.png'
 
 const MARQUEE_ICONS = [
   { src: iconPython, alt: 'Python' },
