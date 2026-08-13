@@ -45,7 +45,7 @@ const NAV = [
 // ── Navbar layout controls ──────────────────────────────────────────
 // Change these and the whole top bar (plus sidebar/main offsets below,
 // which stay in sync automatically) will follow.
-const NAVBAR_HEIGHT    = 20  // px — overall bar height
+const NAVBAR_HEIGHT    = 56  // px — overall bar height
 const NAVBAR_PADDING_X = 20  // px — left/right edge spacing
 const NAVBAR_GAP_LOGO  = 10  // px — gap between dot and "ReflectAI" text
 const NAVBAR_GAP_USER  = 10  // px — gap between avatar and name/sign-out
@@ -55,7 +55,7 @@ const NAVBAR_GAP_USER  = 10  // px — gap between avatar and name/sign-out
 const NAVBAR_VERTICAL_ALIGN = 'center'
 // Fine-tune nudge on top of the alignment above (px). Positive = push down,
 // negative = push up. Use this for small adjustments once ALIGN is set.
-const NAVBAR_VERTICAL_NUDGE = -21
+const NAVBAR_VERTICAL_NUDGE = 0
 
 // ── Logo ("ReflectAI") controls ─────────────────────────────────────
 const LOGO_DOT_SIZE   = 10    // px — diameter of the pink/purple dot
